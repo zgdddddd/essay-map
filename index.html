@@ -1389,7 +1389,7 @@ function boot() {
   // On the real site the map comes from GitHub; the cover and loading screen hide the page until it arrives.
   S.data = migrate(clone(DEMO ? (saved || seed || blank()) : blank()));
   renderShell(); bind(); renderTop(); renderBanner(); render();
-  if (!DEMO) { var s = document.createElement('script'); s.src = 'cloud.js'; document.body.appendChild(s); }
+  if (!DEMO) { var s = document.createElement('script'); s.src = 'cloud.js?v=2'; document.body.appendChild(s); }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleWires);
 }
 boot();

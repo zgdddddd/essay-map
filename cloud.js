@@ -250,8 +250,16 @@
     st.error = ''; st.keyError = false; showLoading(true); status();
     var dmeta;
     return getMeta(CFG.dataPath).then(function (m) {
-      if (!m) throw new Error('仓库里还没有 ' + CFG.dataPath + '：请先把 essay-map-data 文件夹里的文件上传到 ' + CFG.owner + '/' + CFG.repo);
-      dmeta = m; return getText(CFG.dataPath, m);
+      if (m) { dmeta = m; return getText(CFG.dataPath, m); }
+      return getMeta('').then(function (root) {
+        var repo = CFG.owner + '/' + CFG.repo;
+        if (root) throw new Error('已连接 ' + repo + '，但 ' + CFG.branch + ' 分支缺少 ' + CFG.dataPath + '。请仓库拥有者检查文件。');
+        var e = new Error(st.fromLink
+          ? '这条协作链接无法读取 ' + repo + '。请向发链接的人索取新链接。'
+          : '当前 token 无法读取 ' + repo + '。请在 GitHub 的 token 设置中选中该仓库，将 Contents 设为 Read and write，再重新连接。');
+        e.keyError = true;
+        throw e;
+      });
     }).then(function (txt) {
       var data = JSON.parse(txt);
       return getMeta(CFG.assetsPath).then(function (am) {
@@ -266,7 +274,7 @@
       hideCover(); showLoading(false); status();
       return loadComments();
     }).catch(function (e) {
-      st.error = e.message || String(e); st.keyError = e.status === 401; showLoading(false); status(); showCover();
+      st.error = e.message || String(e); st.keyError = e.status === 401 || e.keyError === true; showLoading(false); status(); showCover();
     });
   }
 
@@ -1013,7 +1021,7 @@
       h += '<h2>暂时无法载入</h2><p class="err">' + esc(st.error) + '</p><div class="row"><button class="pri" data-c="retry">重试</button></div>';
     }
     if (!configMissing()) {
-      h += '<details' + (st.token && !st.keyError ? '' : '') + '><summary>我是仓库拥有者：用 token 连接</summary>' +
+      h += '<details' + (st.keyError && !st.fromLink ? ' open' : '') + '><summary>我是仓库拥有者：用 token 连接</summary>' +
         '<p>粘贴只授权 <code>' + esc(CFG.owner + '/' + CFG.repo) + '</code>、Contents 可读写的 fine-grained token。它只保存在这台电脑的浏览器里。连上以后点左下角「分享链接」，就能生成给合作者的链接。</p>' +
         '<input id="gh-tok" type="password" placeholder="github_pat_…" autocomplete="off"><div class="err" id="gh-err"></div>' +
         '<div class="row"><button class="pri" data-c="go">连接并载入</button></div></details>';
